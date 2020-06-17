@@ -1,53 +1,49 @@
+'user strict'
 const WebScoketServer = require('ws').Server
 const http = require('http')
 const express = require('express')
 const WebScoket = require('ws')
-
-
 const app = express()
 const httpServer = http.createServer(app)
-
-const wss = new WebScoketServer({server:httpServer})
-
-// const 
-httpServer.on('request',(req,res)=> {
-    console.log(req.url);
+const wss = new WebScoketServer({
+    server: httpServer
 })
 
-let clientList = []
+let webClients = {}
+let wsClient = null
 
-wss.on('connection',webScoket=> {
-    clientList.push(webScoket)
-    console.log('客户端连接成功');
-    webScoket.send('ok 你连上我了 我给你发个消息试试!!')
-    
-	webScoket.on("message", function(data) {
-        console.log(`wsClient Said:  ${data}`);
-        clientList.forEach(socekt=> {
-            socekt.send(data.toString().trim());
-        })
-    });
+wss.on('connection', (webScoket, req) => { //web客户端连接时触发
+    console.log('web客户端连接成功');
+    webScoket.send('给web客户端发个消息测试')
+    // ---------------webSocket客户端与真实服务器事件监听--------------------
+    let path = req.url
+    webClients[path] = webScoket
 
-    // 终端输入事件
-    process.stdin.on('data',data=> {
-        console.log(data.toString().trim());
-    })
+    wsClient = new WebScoket(`ws://localhost:5656${path}`) //向真实的服务端发起请求
+    wsClient.onopen = function (e) {
+        console.log('connection open...');
+    }
+    wsClient.onmessage = function (e) {
+        console.log(e.data);
+        webClients[path].send(e.data) //精准发送数据
+    }
+    wsClient.onerror = function (e) {
+        console.log(e);
+    }
+    wsClient.onclose = function (e) {
+        console.log('连接断开');
+        wsClient.close()
+    }
+})
 
-    webScoket.on("error", function(err) {
-		console.log("client error", err);
-    });
+wss.on('close', () => {
+    webClients = {}
+    wsClient = null
+    wss = null
+    wsClient = null
+    console.log('服务器宕机了哈');
+})
 
-    webScoket.on("close", function() {
-		console.log("client close");
-    });
-    
-
-})  
-
-
-
-
-
-httpServer.listen(5656,()=> {
+httpServer.listen(5656, () => {
     console.log('server running at localhost:5656');
 })
