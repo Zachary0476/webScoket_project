@@ -1,0 +1,171 @@
+.Git命令使用
+9.1 代码检出和同步
+9.1.1 git clone
+ 
+git clone "ssh://gerrit@10.192.1.50:29418/ICU_TEST" && scp -p -P 29418 gerrit@10.192.1.50:hooks/commit-msg "ICU_TEST/.git/hooks/"
+代码库中的文件完全覆盖本地工作版本
+git reset --hard
+更新到某个版本：git reset --hard [commit哈希值]
+9.1.2 远程同步
+# 下载远程仓库的所有变动
+$ git fetch [remote]
+# 显示所有远程仓库
+$ git remote -v
+# 显示某个远程仓库的信息
+$ git remote show [remote]
+# 增加一个新的远程仓库，并命名
+$ git remote add [shortname] [url]
+# 取回远程仓库的变化，并与本地分支合并
+$ git pull [remote] [branch]
+# 上传本地指定分支到远程仓库
+$ git push [remote] [branch]
+# 强行推送当前分支到远程仓库，即使有冲突
+$ git push [remote] --force
+# 推送所有分支到远程仓库
+$ git push [remote] –all
+$ git remote update  --更新远程仓库
+
+注：git fetch与git pull的区别
+1. git fetch相当于是从远程获取最新版本到本地，不会自动merge
+git fetch origin master
+git log -p master..origin/master
+git merge origin/master
+git fetch origin master:tmp //从远程仓库master分支获取最新，在本地建立tmp分支
+git diff tmp //将当前分支和tmp进行对比
+git merge tmp //合并tmp分支到当前分支
+2.git pull：相当于是从远程获取最新版本并merge到本地
+9.2 查看命令
+# 显示有变更的文件
+$ git status
+# 显示当前分支的版本历史
+$ git log
+# 显示commit历史，以及每次commit发生变更的文件
+$ git log --stat
+# 显示某个commit之后的所有变动，每个commit占据一行
+$ git log [tag] HEAD --pretty=format:%s
+# 显示某个commit之后的所有变动，其"提交说明"必须符合搜索条件
+$ git log [tag] HEAD --grep feature
+# 显示某个文件的版本历史，包括文件改名
+$ git log --follow [file]
+$ git whatchanged [file]
+# 显示指定文件相关的每一次diff
+$ git log -p [file]
+# 显示过去5次提交
+$ git log -5 --pretty --oneline
+# 显示所有提交过的用户，按提交次数排序
+$ git shortlog -sn
+# 显示指定文件是什么人在什么时间修改过
+$ git blame [file]
+# 显示暂存区和工作区的代码差异
+$ git diff
+# 显示暂存区和上一个commit的差异
+$ git diff --cached [file]
+# 显示工作区与当前分支最新commit之间的差异
+$ git diff HEAD
+# 显示两次提交之间的差异
+$ git diff [first-branch]...[second-branch]
+# 显示今天你写了多少行代码
+$ git diff --shortstat "@{0 day ago}"
+# 显示某次提交的元数据和内容变化
+$ git show [commit]
+# 显示某次提交发生变化的文件
+$ git show --name-only [commit]
+# 显示某次提交时，某个文件的内容
+$ git show [commit]:[filename]
+# 显示当前分支的最近几次提交
+$ git reflog
+# 从本地master拉取代码更新当前分支：branch 一般为master
+$ git rebase [branch]
+# 搜索提交历史，根据关键词
+$ git log -S [keyword]
+
+9.3 取消操作
+# 取消一次commit
+$ git reset --soft HEAD^
+#取消多次
+$ git reset --soft HEAD~[number]
+# 取消add
+$git checkout file
+注：git reset的三种用法
+git reset (–mixed) HEAD~1
+回退一个版本,且会将暂存区的内容和本地已提交的内容全部恢复到未暂存的状态,不影响原来本地文件(未提交的也不影响)
+git reset --soft HEAD~1
+回退一个版本,不清空暂存区,将已提交的内容恢复到暂存区,不影响原来本地的文件(未提交的也不受影响)
+git reset --hard HEAD~1
+回退一个版本,清空暂存区,将已提交的内容的版本恢复到本地,本地的文件也将被恢复的版本替换
+9.4 分支
+1）分支查看
+# 查看本地分支
+$ git branch
+# 查看远程分支
+$ git branch -r
+# 查看本地、服务器所有分支
+$ git branch -a
+# 显示本地分支和服务器分支的映射关系
+$ git branch -vv
+2）切换分支
+# 切换到指定分支，并更新工作区
+$ git checkout [branch-name]
+ # 切换到上一个分支
+$ git checkout -
+3）新建分支
+# 新建一个分支，但依然停留在当前分支
+$ git branch [branch-name]
+# 新建一个分支，并切换到该分支
+$ git checkout -b [branch]
+# 新建一个分支，与指定的远程分支建立追踪关系
+$ git branch --track [branch] [remote-branch]
+Eg:
+git branch --track test origin/master
+git checkout test
+git push origin  HEAD:refs/for/master
+
+4）本地分支关联到远程分支
+# 新建一个分支，与指定的远程分支建立追踪关系
+$ git branch --track [branch] [remote-branch]
+Eg:
+git branch --track test origin/master
+git checkout test
+# 本地分支建立与远程分支同步之后，就可以直接使用git pull命令了
+$ git branch --set-upstream-to [branch] [remote-branch]
+EG：
+git branch --set-upstream-to origin/LP_20200402_TEST2 test2
+5）合并分支
+# 合并分支,将名称为[name]的分支与当前分支合并
+$ git merge [name] 
+6）删除分支
+# 删除远程分支
+$ git push origin --delete [branch name]
+$ git push origin --delete [branch name]
+# 删除本地分支(-d删除已经参与了合并的分支，对于未有合并的分支是无法删除的，如果想强制删除一个分支，可以使用-D选项） 
+$ git branch -d [branch name]
+7）显示分支和提交
+# 显示分支和提交记录
+$ git show-branch 
+9.3 git tag
+$ git chechout [branch]
+$ git tag -a T_T_LP_ICU_TEST2_20200415 -m "v1.0.12" [commit哈希码]
+$git push origin T_T_LP_ICU_TEST2_20200415
+
+10、QA
+10.1解决 ERROR: MISSING CHANGE-ID IN COMMIT MESSAGE FOOTER 问题
+提交代码操作
+git push origin HEAD：refs/for/XXX，提示失败ERROR: missing Change-Id in commit message footer，丢失Change-Id。
+解决方法如下：
+按照出错提示执行以下命令：
+1.复制保留执行push操作的时候提示缺失的   【Change-Id： XXXX】信息
+2.gitdir=$(git rev-parse --git-dir); scp -p -P 29418 gitusername@serverip:hooks/commit-msg ${gitdir}/hooks/
+3.执行git commit --amend,进入编辑界面，将第一步中的【Change-Id： XXXX】信息贴在文本的最后一行，请务必记得请把Change-Id信息粘贴在文本的最后一行，因为本人就因为把Change-Id信息放在文本注释和描述信息中间，导致的继续push还会报同样的错误。
+ 以上就是全部方法的步骤。
+10.2 warning: refname 'HEAD' is ambiguous.
+删除HEAD:
+git branch -D HEAD
+11.其他
+1.	工程命名规范
+2.	权限配置:以组为单位or以人为单位
+3.	与jenkins集成：jenkins权限以组配置，以项目组区分
+LP_ICU/SW_LP_ICU
+LP_IVI/SW_LP_IVI
+
+ALL_Project配置：
+
